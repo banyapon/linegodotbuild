@@ -49,7 +49,10 @@ test('asset URLs restrict protocol, host, cloud and extension', () => {
 test('delete accepts quoted ID but rejects path traversal', () => { assert.equal(command('x-delete "p_1234567890123456"').type, 'delete'); assert.equal(command('x-delete "../main"').type, 'help'); });
 test('Gemini uses header key and validates structured design', async () => {
   const previous = template(); const result = await design({ design: previous, assets: [], history: [] }, 'อยากได้ดาว 9 ดวง', { GEMINI_API_KEY: 'synthetic-key' }, { call: async (service, url, options) => {
-    assert.equal(service, 'Gemini'); assert(!url.includes('synthetic-key')); assert.equal(options.headers['x-goog-api-key'], 'synthetic-key'); assert(JSON.parse(options.body).generationConfig.responseJsonSchema);
+    assert.equal(service, 'Gemini'); assert(!url.includes('synthetic-key')); assert.equal(options.headers['x-goog-api-key'], 'synthetic-key');
+    const body = JSON.parse(options.body); assert.equal(body.generationConfig.responseMimeType, 'application/json');
+    assert(!('responseJsonSchema' in body.generationConfig), 'Provider rejects nested responseJsonSchema');
+    assert(body.systemInstruction.parts.some(x => x.text.includes('"properties"')));
     return Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify({ ...previous, game: { ...previous.game, coinCount: 9 }, reply: 'เพิ่มดาวแล้ว อยากเพิ่มอะไรอีก?' }) }] } }] });
   } }); assert.equal(result.design.game.coinCount, 9);
 });

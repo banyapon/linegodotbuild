@@ -3,7 +3,7 @@
   "id": "p_f7a8c8d00c7edb50",
   "owner": "34f0c2b56cac549f6f91",
   "status": "draft",
-  "updatedAt": "2026-11-03T07:42:38.214Z",
+  "updatedAt": "2026-11-03T07:48:10.513Z",
   "design": {
     "version": 1,
     "genre": "2d",
@@ -62,7 +62,13 @@
         "choices": []
       }
     ],
-    "assets": []
+    "assets": [
+      {
+        "id": "a1",
+        "url": "https://res.cloudinary.com/dkyzhwy4w/image/upload/v1793692090/line-studio/34f0c2b56cac549f6f91/p_f7a8c8d00c7edb50/1c22d5910932eaf470c1.jpg",
+        "role": "background"
+      }
+    ]
   },
   "files": [
     "index.html",
@@ -92,7 +98,17 @@
     {
       "role": "assistant",
       "text": "เพิ่มระบบฟันดาบแบบเทิร์นเบส (Turn-based Slash) พร้อมการปัดหน้าจอเพื่อโจมตีและเลือกเส้นทางเนื้อเรื่องเรียบร้อยครับ ต้องการเพิ่มท่าไม้ตายหรือไอเทมฟื้นพลังไหมครับ?"
+    },
+    {
+      "role": "user",
+      "text": "เพิ่มภาพ a1 (background)"
     }
   ],
-  "assets": []
+  "assets": [
+    {
+      "id": "a1",
+      "url": "https://res.cloudinary.com/dkyzhwy4w/image/upload/v1793692090/line-studio/34f0c2b56cac549f6f91/p_f7a8c8d00c7edb50/1c22d5910932eaf470c1.jpg",
+      "role": "background"
+    }
+  ]
 }

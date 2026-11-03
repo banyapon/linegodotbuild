@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>Starward Patrol</title><style>canvas{width:100%;height:100%;object-fit:contain}#readout{position:absolute;top:20px;left:20px;font-size:12px;letter-spacing:1px;color:#b8ecf0}#end{position:absolute;inset:0;display:none;place-items:center;text-align:center;background:#05111ede}#end h1{font-size:28px}#end button{background:#b8f4db;color:#102a28;padding:12px 25px;border:0;border-radius:8px}#subtitle{position:absolute;bottom:145px;width:100%;text-align:center;font-size:10px;color:#81a5b4;pointer-events:none}</style><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#071320;color:#f2fbff;font-family:system-ui;touch-action:none}*{box-sizing:border-box}canvas{display:block}#studio-controls{position:fixed;inset:auto 0 18px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;pointer-events:none;z-index:10000}#studio-controls[hidden]{display:none}#studio-controls>*{pointer-events:auto}[data-joystick]{width:108px;height:108px;border-radius:50%;display:grid;place-items:center;background:#aacbff16;border:1px solid #bcecff60;touch-action:none;user-select:none;box-shadow:inset 0 0 0 12px #bcecff09}[data-stick-knob]{display:block;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#b7f4e7,#65a8ba);border:2px solid #defbff;pointer-events:none;box-shadow:0 5px 18px #0008}#studio-fire{width:70px;height:70px;border-radius:50%;background:#d28f4444;border:1px solid #ffe1ae99;color:#ffe6b5;font-weight:bold;touch-action:none}#studio-pause{position:fixed;right:12px;top:12px;border:1px solid #c8ecf055;color:#d9f5fa;background:#162b3a99;padding:7px 12px;border-radius:7px;z-index:10000;font-size:11px}button{font-family:inherit}button:focus-visible{outline:2px solid #d7ffbd;outline-offset:3px}</style></head><body><canvas id="game" width="540" height="960"></canvas><div id="readout"></div><div id="subtitle">STARWARD PATROL · ยิงอัตโนมัติ · ลากจอยเพื่อหลบ</div><div id="end"><div><h1 id="outcome"></h1><p id="summary"></p><button id="retry">บินอีกครั้ง ↗</button></div></div><button id="studio-pause">พัก</button><div id="studio-controls"><div data-joystick="" role="group" aria-label="Virtual Joystick"><span data-stick-knob=""></span></div><button id="studio-fire" aria-label="ยิงหรือใช้ความสามารถ">FIRE</button></div><script>(function installStandaloneControls(attach, vector) {
+  const input = { x: 0, y: 0, fire: false, paused: false }, held = new Set();
+  window.StudioInput = input;
+  window.StudioControls = { setVisible(value) { document.getElementById('studio-controls').hidden = !value; } };
+  const analog = { x: 0, y: 0 };
+  const read = () => { input.x = Math.max(-1, Math.min(1, analog.x + Number(held.has('right')) - Number(held.has('left')))); input.y = Math.max(-1, Math.min(1, analog.y + Number(held.has('down')) - Number(held.has('up')))); window.dispatchEvent(new CustomEvent('studio:input', { detail: { ...input } })); };
+  const stick = attach(document.querySelector('[data-joystick]'), value => { analog.x = value.x; analog.y = value.y; read(); }, vector);
+  const mapping = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down' };
+  const fire = document.getElementById('studio-fire');
+  const release = () => { input.fire = false; read(); };
+  fire.addEventListener('pointerdown', e => { e.preventDefault(); fire.setPointerCapture(e.pointerId); input.fire = true; read(); });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) fire.addEventListener(type, release);
+  window.addEventListener('keydown', e => { if (mapping[e.key]) { e.preventDefault(); held.add(mapping[e.key]); read(); } if (e.code === 'Space') { e.preventDefault(); input.fire = true; read(); } });
+  window.addEventListener('keyup', e => { if (mapping[e.key]) { held.delete(mapping[e.key]); read(); } if (e.code === 'Space') release(); });
+  const pause = document.getElementById('studio-pause');
+  pause.addEventListener('click', () => { input.paused = !input.paused; pause.textContent = input.paused ? 'เล่นต่อ' : 'พัก'; read(); });
+  window.addEventListener('blur', () => { held.clear(); stick.reset(); release(); });
+})(function attachJoystick(element, change, vector = joystickVector) {
+  let pointer = null;
+  const knob = element.querySelector('[data-stick-knob]');
+  const reset = () => { pointer = null; element.dataset.x = '0'; element.dataset.y = '0'; if (knob) knob.style.transform = 'translate(0px,0px)'; change({ x: 0, y: 0 }); };
+  const update = event => {
+    const box = element.getBoundingClientRect(), radius = box.width * .34;
+    const dx = event.clientX - box.left - box.width / 2, dy = event.clientY - box.top - box.height / 2;
+    const point = vector(dx, dy, radius), length = Math.max(1, Math.hypot(dx, dy) / radius);
+    element.dataset.x = String(point.x); element.dataset.y = String(point.y);
+    if (knob) knob.style.transform = `translate(${dx / length}px,${dy / length}px)`;
+    change(point);
+  };
+  const down = event => { if (pointer !== null) return; event.preventDefault(); pointer = event.pointerId; element.setPointerCapture(pointer); update(event); };
+  const move = event => { if (event.pointerId === pointer) { event.preventDefault(); update(event); } };
+  const up = event => { if (event.pointerId === pointer) reset(); };
+  element.addEventListener('pointerdown', down); element.addEventListener('pointermove', move);
+  element.addEventListener('pointerup', up); element.addEventListener('pointercancel', up); element.addEventListener('lostpointercapture', reset);
+  window.addEventListener('blur', reset);
+  return { reset, destroy() { reset(); element.removeEventListener('pointerdown', down); element.removeEventListener('pointermove', move); element.removeEventListener('pointerup', up); element.removeEventListener('pointercancel', up); element.removeEventListener('lostpointercapture', reset); window.removeEventListener('blur', reset); } };
+},function joystickVector(dx, dy, radius, deadZone = 0.12) {
+  const length = Math.hypot(dx, dy);
+  if (!length || radius <= 0 || length <= radius * deadZone) return { x: 0, y: 0 };
+  const magnitude = Math.min(1, (length / radius - deadZone) / (1 - deadZone));
+  return { x: dx / length * magnitude, y: dy / length * magnitude };
+});</script><script src="./index.js"></script></body></html>

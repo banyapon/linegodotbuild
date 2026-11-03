@@ -16,7 +16,7 @@ createServer(async (req, res) => {
       catch { res.writeHead(404).end('Not found'); }
       return;
     }
-    const request = new Request(`http://localhost:3000${req.url}`, {
+    const request = new Request(`http://localhost:${Number(process.env.PORT || 3000)}${req.url}`, {
       method: req.method, headers: req.headers,
       ...(req.method === 'GET' || req.method === 'HEAD' ? {} : { body: req, duplex: 'half' }),
     });

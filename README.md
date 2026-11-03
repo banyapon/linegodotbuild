@@ -4,6 +4,16 @@ Create and revise browser games from LINE. TypeScript + Phaser for 2D, Three.js 
 
 Live: https://linegodotbuild.vercel.app
 
+## Single-page games and mobile controls
+
+`new game`, `new 2d` and `new space` start a portrait space shooter. Describe a game or use `build web <brief>` to ask Gemini for original `index.html` and `index.js`: space shooters, racing, puzzles and other local game mechanics. These files and `studio/project.json` commit together to the project branch. No per-game build or deployment is needed.
+
+The player primarily uses 9:16, with analog Virtual Joystick, FIRE and pause. Generated games read `window.StudioInput` (`x`, `y`, `fire`, `paused`); pointer-only games can call `StudioControls.setVisible(false)`. Source is classic JavaScript using Canvas/DOM or the bundled global `THREE`. The studio and built-in players use TypeScript. `new collector` selects the earlier coin-collector template.
+
+Generated code runs only inside a browser sandbox without same-origin access, network APIs, storage or external imports. HTML is cleaned and JS syntax checked before saving; this does not prove every generated game is bug-free. Cloudinary images are allowed. Send images, then ask Gemini to apply them. LINE responses use Flex Cards with play, source, edit, publish and delete actions.
+
+[Try the 9:16 space shooter with Joystick](https://linegodotbuild.vercel.app/play/demo/space).
+
 ## Try it
 
 - [2D coin collector](https://linegodotbuild.vercel.app/play/demo/2d)
@@ -17,7 +27,7 @@ These demos do not need any external credentials. Use arrows/WASD or touch contr
 
 | Message | Result |
 | --- | --- |
-| `new 2d` | New 2D project (default) |
+| `new game` / `new 2d` / `new space` | New single-page project (9:16 + Joystick) |
 | `new vn` / `new 3d` | Visual Novel / Three.js project |
 | `new ttt` / `new xo` | Monster Tic Tac Toe against a computer opponent |
 | `build web สร้างเกม Tic Tac Toe แบบ monster` | Design and publish the requested template in one message |
@@ -42,9 +52,9 @@ Each project gets a random `p_...` ID, a hashed user namespace, branch `game/<na
 
 Drafts, published snapshots and per-user active projects are stored in Redis. Each successful design/image change also commits `studio/project.json` on the project branch, including the latest 40 conversation entries and asset references. Raw LINE User IDs and reply tokens are not committed. Redis must remain available and persistent; branches do not automatically restore a lost Redis registry. Configure backups in the Redis provider.
 
-Editing a published game leaves its last published snapshot playable until `พอแล้ว` publishes again. Generic, prebuilt TypeScript players render the JSON design, so each game does not need a separate Vercel deployment. `game/**` branches do not trigger automatic Vercel builds.
+Editing a published game leaves its last published snapshot playable until `พอแล้ว` publishes again. A shared TypeScript player loads the published design or sandboxed source files, so each game does not need a separate Vercel deployment. `game/**` branches do not trigger automatic Vercel builds.
 
-Gemini receives the current design, recent conversation and up to three most recent image previews from Cloudinary. Its structured JSON is validated; it cannot execute code or invent asset URLs. Supported changes are title/story, palette, difficulty counts/speed/time, asset roles, and VN scene choices. It does **not** implement arbitrary new mechanics, generate images, or generate runnable TypeScript. Without `GEMINI_API_KEY`, the bot clearly labels template mode and supports `ชื่อ ...`, `เหรียญ 12`, `ศัตรู 4`, `เวลา 90` plus genre changes (`2d`, `3d`, `vn`).
+Gemini receives the current design, recent conversation, current source files for custom games, and up to three recent image previews (two for source generation). Custom games generate HTML/JavaScript; Visual Novel and Tic Tac Toe modes continue using validated JSON templates. Source is capped at 32 KB HTML and 100 KB JavaScript. The bot asks a follow-up question; `พอแล้ว` publishes the draft. Without a Gemini key, `new space` remains playable, but creating new mechanics requires Gemini.
 
 ## Environment variables
 

@@ -6,4 +6,5 @@ node_modules/
 build/
 *.log
 public/assets/
+public/vendor/
 artifacts/

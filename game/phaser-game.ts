@@ -5,7 +5,7 @@ import type { GameDesign, GameView } from './types.ts';
 import type { World } from './simulation.ts';
 
 export function start2D(design: GameDesign, host: HTMLElement, onUpdate: (world: World) => void, paused: () => boolean): GameView {
-  const world = createWorld(design, host.clientWidth < host.clientHeight); const input = createInput();
+  const world = createWorld(design, true); const input = createInput();
   const WIDTH = world.width, HEIGHT = world.height;
   const numeric = (color: string) => parseInt(color.slice(1), 16);
   class Arena extends Phaser.Scene {

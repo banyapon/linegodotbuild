@@ -1,13 +1,13 @@
 import { createHmac } from 'node:crypto';
 export const env = { LINE_CHANNEL_SECRET: 'test-secret', LINE_CHANNEL_ACCESS_TOKEN: 'test-token', LINE_ALLOWED_USER_IDS: 'Ualice,Ubob', GITHUB_TOKEN: 'test-gh', GITHUB_OWNER: 'banyapon', GITHUB_REPO: 'linegodotbuild', UPSTASH_REDIS_REST_URL: 'https://redis.test', UPSTASH_REDIS_REST_TOKEN: 'test-redis', CLOUDINARY_CLOUNDNAME: 'test-cloud', CLOUDINARY_API_KEY: 'test-key', CLOUDINARY_API_SECRET: 'test-secret' };
 let count = 0;
-export function event(text = 'new 2d', user = 'Ualice') { return { type: 'message', webhookEventId: `event-${++count}`, replyToken: `reply-${count}`, source: { type: 'user', userId: user }, message: { type: 'text', text } }; }
+export function event(text = 'new collector', user = 'Ualice') { return { type: 'message', webhookEventId: `event-${++count}`, replyToken: `reply-${count}`, source: { type: 'user', userId: user }, message: { type: 'text', text } }; }
 export function request(events, signature) {
   const raw = JSON.stringify({ events });
   return new Request('https://example.test/api/webhook', { method: 'POST', body: raw, headers: { 'x-line-signature': signature ?? createHmac('sha256', env.LINE_CHANNEL_SECRET).update(raw).digest('base64') } });
 }
 export function fixture() {
-  const store = new Map(), sets = new Map(), files = new Map(), branches = new Set(), calls = [], messages = [];
+  const store = new Map(), sets = new Map(), files = new Map(), branches = new Set(), calls = [], messages = [], trees = new Map();
   let failService = '';
   const redis = args => {
     const [cmd, key, ...v] = args;
@@ -31,6 +31,11 @@ export function fixture() {
     if (url.startsWith('https://api.cloudinary.com/')) return Response.json(url.endsWith('/destroy') ? { result: 'ok' } : { secure_url: 'https://res.cloudinary.com/test-cloud/image/upload/v1/asset.png' });
     if (url.startsWith('https://api.github.com/')) {
       if (url.includes('/git/ref/heads/main')) return Response.json({ object: { sha: 'base-sha' } });
+      if (url.includes('/git/ref/heads/')) return Response.json({ object: { sha: 'head-sha' } });
+      if (url.includes('/git/commits/') && !options.method) return Response.json({ tree: { sha: 'base-tree' } });
+      if (url.endsWith('/git/trees')) { const body=JSON.parse(options.body); const sha=`tree-${calls.length}`; trees.set(sha,body.tree); return Response.json({sha}); }
+      if (url.endsWith('/git/commits') && options.method==='POST') { const body=JSON.parse(options.body); return Response.json({sha:body.tree}); }
+      if (url.includes('/git/refs/heads/') && options.method==='PATCH') { const body=JSON.parse(options.body); const entries=trees.get(body.sha); const snapshot=JSON.parse(entries.find(e=>e.path==='studio/project.json').content); files.set(snapshot.design?`game/${snapshot.owner}/${snapshot.id}`:'unknown',snapshot); return Response.json({}); }
       if (url.endsWith('/git/refs') && options.method === 'POST') { branches.add(JSON.parse(options.body).ref); return Response.json({}); }
       if (url.includes('/git/refs/heads/') && options.method === 'DELETE') { branches.delete('refs/heads/' + decodeURIComponent(url.split('/heads/')[1])); return new Response(null, { status: 204 }); }
       if (url.includes('/contents/studio/project.json')) {
@@ -40,5 +45,5 @@ export function fixture() {
     }
     throw new Error(`Unexpected URL ${url}`);
   };
-  return { store, files, branches, calls, messages, fetcher, fail(service) { failService = service; }, lastMessage() { return messages.at(-1)?.messages[0].text; }, projects() { return [...store.entries()].filter(([k]) => k.startsWith('studio:project:')).map(([,v]) => JSON.parse(v)); } };
+  return { store, files, branches, calls, messages, trees, fetcher, fail(service) { failService = service; }, lastMessage() { const message=messages.at(-1)?.messages[0];if(message?.type==='text')return message.text;const contents=message?.contents;const bubbles=contents?.type==='carousel'?contents.contents:[contents];return bubbles.filter(Boolean).map(b=>b.body.contents.map(x=>x.text||'').join('\n')).join('\n'); }, projects() { return [...store.entries()].filter(([k]) => k.startsWith('studio:project:')).map(([,v]) => JSON.parse(v)); } };
 }

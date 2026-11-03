@@ -9,7 +9,7 @@ export interface World {
   outcome: 'playing' | 'won' | 'lost';
 }
 export function createWorld(design: GameDesign, portrait = false): World {
-  const width = portrait ? 540 : WIDTH, height = portrait ? 840 : HEIGHT;
+  const width = portrait ? 540 : WIDTH, height = portrait ? 960 : HEIGHT;
   const columns = portrait ? 4 : 8, rows = Math.ceil(design.game.coinCount / columns);
   const coins = Array.from({ length: design.game.coinCount }, (_, i) => ({ x: 65 + (i % columns) * ((width - 130) / (columns - 1)), y: 85 + Math.floor(i / columns) * Math.min(130, (height - 190) / Math.max(1, rows - 1)), collected: false }));
   const enemies = Array.from({ length: design.game.enemyCount }, (_, i) => {

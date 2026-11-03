@@ -1,4 +1,4 @@
 {
-  "compilerOptions": { "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler", "lib": ["ES2022", "DOM", "DOM.Iterable"], "strict": true, "noEmit": true, "allowImportingTsExtensions": true, "skipLibCheck": true, "esModuleInterop": true },
+  "compilerOptions": { "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler", "lib": ["ES2022", "DOM", "DOM.Iterable"], "strict": true, "noEmit": true, "allowImportingTsExtensions": true, "skipLibCheck": true, "esModuleInterop": true, "allowJs": true },
   "include": ["game/**/*.ts"]
 }

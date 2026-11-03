@@ -13,8 +13,8 @@ async function load() {
   if (!response.ok) throw new Error(response.status === 404 ? 'ไม่พบเกมนี้ เกมอาจยังไม่เผยแพร่หรือถูกลบแล้ว' : 'โหลดเกมไม่ได้ กรุณาลองใหม่ภายหลัง');
   game = await response.json();
   document.title = `${game.title} · LINE Game Studio`; title.textContent = game.title; description.textContent = game.description;
-  element('genre').textContent = game.mode === 'tictactoe' ? 'MONSTER · TIC TAC TOE' : game.genre === 'vn' ? 'VISUAL NOVEL' : game.genre === '3d' ? 'THREE.JS · 3D' : 'PHASER · 2D';
-  element('hint').textContent = game.mode === 'tictactoe' ? 'แตะช่องเพื่อวาง X · เรียง 3 ตัวก่อนมอนสเตอร์' : game.genre === 'vn' ? 'อ่านเรื่องราวและเลือกเส้นทางของคุณ' : 'WASD / ปุ่มลูกศร / ปุ่มบนหน้าจอ · เก็บดาวให้ครบ · หลบศัตรู';
+  element('genre').textContent = game.mode === 'custom' ? 'YOUR GAME · 9:16' : game.mode === 'tictactoe' ? 'MONSTER · TIC TAC TOE' : game.genre === 'vn' ? 'VISUAL NOVEL' : game.genre === '3d' ? 'THREE.JS · 3D' : 'PHASER · 2D';
+  element('hint').textContent = game.mode === 'custom' ? 'Virtual Joystick / WASD / ลูกศร · FIRE เพื่อใช้ความสามารถ' : game.mode === 'tictactoe' ? 'แตะช่องเพื่อวาง X · เรียง 3 ตัวก่อนมอนสเตอร์' : game.genre === 'vn' ? 'อ่านเรื่องราวและเลือกเส้นทางของคุณ' : 'WASD / ลูกศร / Virtual Joystick · เก็บดาวให้ครบ · หลบศัตรู';
   const instructions = document.querySelector('.game-bottom p');
   if (instructions && (game.mode === 'tictactoe' || game.genre === 'vn')) instructions.textContent = game.mode === 'tictactoe' ? 'แตะช่อง · เรียง 3 ตัว · ดวลกับมอนสเตอร์' : 'เลือกคำตอบเพื่อเดินเรื่องต่อ';
   const bg = game.assets.find(a => a.role === 'background');
@@ -36,10 +36,17 @@ async function begin() {
   if (starting) return; starting = true; start.disabled = true; start.textContent = 'กำลังเปิดเกม…';
   try {
     view?.destroy(); host.replaceChildren(); delete host.dataset.ready; delete host.dataset.playerX; delete host.dataset.playerY; result.hidden = true; paused = false; pauseButton.textContent = 'พัก';
-    const narrative = game.genre === 'vn' || game.mode === 'tictactoe';
+    const narrative = game.genre === 'vn' || game.mode === 'tictactoe' || game.mode === 'custom';
     controls.hidden = narrative; hud.hidden = narrative; pauseButton.hidden = narrative;
     cover.hidden = true;
-    if (game.mode === 'tictactoe') view = (await import('./tictactoe.ts')).startTicTacToe(game, host);
+    if (game.mode === 'custom') {
+      const frame = document.createElement('iframe'); frame.className = 'custom-frame'; frame.title = game.title;
+      frame.setAttribute('sandbox', 'allow-scripts'); frame.referrerPolicy = 'no-referrer';
+      frame.src = `/api/games/${matches![1]}/${matches![2]}/index.html`;
+      host.append(frame); host.dataset.ready = 'true';
+      view = { destroy() { frame.remove(); } };
+    }
+    else if (game.mode === 'tictactoe') view = (await import('./tictactoe.ts')).startTicTacToe(game, host);
     else if (game.genre === 'vn') view = (await import('./novel.ts')).startNovel(game, host);
     else if (game.genre === '3d') view = (await import('./three-game.ts')).start3D(game, host, update, () => paused);
     else view = (await import('./phaser-game.ts')).start2D(game, host, update, () => paused);

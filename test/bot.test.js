@@ -1,67 +1,56 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHmac } from 'node:crypto';
 import { handleRequest } from '../lib/bot.js';
-
-const env = {
-  LINE_CHANNEL_SECRET: 'test-secret', LINE_CHANNEL_ACCESS_TOKEN: 'test-token', LINE_ALLOWED_USER_IDS: 'Uallowed',
-  GITHUB_TOKEN: 'test-gh', GITHUB_OWNER: 'banyapon', GITHUB_REPO: 'linegodotbuild',
-  UPSTASH_REDIS_REST_URL: 'https://redis.example', UPSTASH_REDIS_REST_TOKEN: 'test-redis',
-};
-function request(events, signature) {
-  const raw = JSON.stringify({ events });
-  return new Request('https://example.com/api/webhook', { method: 'POST', body: raw,
-    headers: { 'x-line-signature': signature ?? createHmac('sha256', env.LINE_CHANNEL_SECRET).update(raw).digest('base64') } });
-}
-const event = { type: 'message', message: { type: 'text', text: 'build web' }, source: { type: 'user', userId: 'Uallowed' }, replyToken: 'reply', webhookEventId: 'event1' };
-
-test('rejects forged requests before making upstream calls', async () => {
-  const response = await handleRequest(request([event], 'forged'), env, () => assert.fail('upstream called'));
-  assert.equal(response.status, 401);
+import { ownerId, command } from '../lib/projects.js';
+import { template, sanitizeDesign, design } from '../lib/designer.js';
+import { validAssetUrl } from '../lib/services.js';
+import { env, event, request, fixture } from './helpers.js';
+test('forged signature rejected before upstream access', async () => { assert.equal((await handleRequest(request([event()], 'forged'), env, () => assert.fail())).status, 401); });
+test('LINE Verify works with only channel secret', async () => { assert.equal((await handleRequest(request([]), { LINE_CHANNEL_SECRET: env.LINE_CHANNEL_SECRET })).status, 200); });
+test('unauthorized users and group chats cannot create projects', async () => {
+  for (const source of [{ type: 'user', userId: 'Uother' }, { type: 'group', userId: 'Ualice' }]) assert.equal((await handleRequest(request([{ ...event(), source }]), env, () => assert.fail())).status, 200);
 });
-test('LINE verification works before other integrations are configured', async () => {
-  assert.equal((await handleRequest(request([]), { LINE_CHANNEL_SECRET: env.LINE_CHANNEL_SECRET })).status, 200);
+test('create → edit → upload → publish → public URL → owner deletion', async () => {
+  const f = fixture(), send = e => handleRequest(request([e]), env, f.fetcher);
+  await send(event()); let p = f.projects()[0]; assert.equal(p.design.genre, '2d'); assert.match(p.branch, /^game\/[a-f0-9]{20}\/p_/);
+  assert.equal(f.files.get(p.branch).id, p.id); assert(!JSON.stringify(f.files.get(p.branch)).includes('Ualice'));
+  await send(event('เหรียญ 12')); assert.equal(f.projects()[0].design.game.coinCount, 12);
+  await send({ ...event(), message: { type: 'image', id: 'image-1' } }); p = f.projects()[0]; assert.equal(p.assets.length, 1); assert.equal(p.assets[0].owned, true);
+  const upload = f.calls.find(c => c.url.endsWith('/image/upload')); assert(upload.options.body instanceof FormData); assert(upload.options.body.get('signature'));
+  await send(event('ภาพ ล่าสุด ตัวละคร')); assert.equal(f.projects()[0].assets[0].role, 'player');
+  await send(event('พอแล้ว')); p = f.projects()[0]; assert(p.published); assert.match(f.lastMessage(), /\/play\//);
+  const url = `https://test/api/games/${p.owner}/${p.id}`;
+  const r = await handleRequest(new Request(url), env, f.fetcher); assert.equal(r.status, 200); const data = await r.json(); assert.equal(data.game.coinCount, 12); assert(!('history' in data)); assert(!JSON.stringify(data).includes('publicId'));
+  await send(event('เหรียญ 5')); assert.equal((await (await handleRequest(new Request(url), env, f.fetcher)).json()).game.coinCount, 12);
+  await send(event(`x-delete "${p.id}"`, 'Ubob')); assert.match(f.lastMessage(), /ไม่พบโปรเจกต์/); assert(f.projects()[0].published);
+  await send(event(`x-delete "${p.id}"`)); assert.equal(f.projects()[0].status, 'deleted'); assert.equal(f.branches.size, 0); assert(f.calls.some(c => c.url.endsWith('/image/destroy')));
+  assert.equal((await handleRequest(new Request(url), env, f.fetcher)).status, 404);
 });
-test('unauthorized user and group commands cannot dispatch builds', async () => {
-  for (const source of [{ type: 'user', userId: 'Uother' }, { type: 'group', userId: 'Uallowed' }]) {
-    assert.equal((await handleRequest(request([{ ...event, source }]), env, () => assert.fail('upstream called'))).status, 200);
-  }
+test('duplicate delivery creates only one branch', async () => { const f = fixture(), e = event(); await handleRequest(request([e]), env, f.fetcher); await handleRequest(request([e]), env, f.fetcher); assert.equal(f.projects().length, 1); assert.equal(f.branches.size, 1); });
+test('delete revokes URL before failed cleanup and supports retry', async () => {
+  const f = fixture(), send = e => handleRequest(request([e]), env, f.fetcher); await send(event()); await send({ ...event(), message: { type: 'image', id: 'image-2' } }); await send(event('พอแล้ว'));
+  const p = f.projects()[0]; f.fail('api.cloudinary.com'); await send(event(`x-delete "${p.id}"`)); assert.equal(f.projects()[0].status, 'deleting'); assert.equal(f.projects()[0].published, null);
+  f.fail(''); await send(event(`x-delete "${p.id}"`)); assert.equal(f.projects()[0].status, 'deleted');
 });
-test('duplicate delivery dispatches exactly once and uses configured repo and ref', async () => {
-  let claimed = false;
-  const calls = [];
-  const fetcher = async (url, options) => {
-    calls.push({ url, body: JSON.parse(options.body) });
-    if (url === env.UPSTASH_REDIS_REST_URL) {
-      const result = claimed ? null : 'OK'; claimed = true;
-      return Response.json({ result });
-    }
-    if (url.endsWith('/dispatches')) return new Response(null, { status: 204 });
-    return Response.json({});
-  };
-  await handleRequest(request([event]), env, fetcher);
-  await handleRequest(request([event]), env, fetcher);
-  const dispatches = calls.filter(call => call.url.endsWith('/dispatches'));
-  assert.equal(dispatches.length, 1);
-  assert.equal(dispatches[0].url, 'https://api.github.com/repos/banyapon/linegodotbuild/actions/workflows/godot-build.yml/dispatches');
-  assert.deepEqual(dispatches[0].body, { ref: 'main', inputs: { target: 'web', line_user_id: 'Uallowed', request_id: 'event1' } });
+test('Redis failure cannot create GitHub branches', async () => { const f = fixture(); f.fail('redis.test'); await handleRequest(request([event()]), env, f.fetcher); assert.equal(f.branches.size, 0); });
+test('GitHub failure prevents publish', async () => { const f = fixture(); await handleRequest(request([event()]), env, f.fetcher); f.fail('api.github.com'); await handleRequest(request([event('พอแล้ว')]), env, f.fetcher); assert.equal(f.projects()[0].published, null); });
+test('public routes hide drafts and check owner namespace', async () => {
+  const f = fixture(); await handleRequest(request([event()]), env, f.fetcher); const p = f.projects()[0]; assert.equal((await handleRequest(new Request(`https://test/api/games/${p.owner}/${p.id}`), env, f.fetcher)).status, 404);
+  await handleRequest(request([event('พอแล้ว')]), env, f.fetcher); assert.equal((await handleRequest(new Request(`https://test/api/games/${ownerId('Ubob')}/${p.id}`), env, f.fetcher)).status, 404);
 });
-test('Redis failure fails closed without triggering a build', async () => {
-  const response = await handleRequest(request([event]), env, async url => {
-    assert.equal(url, env.UPSTASH_REDIS_REST_URL);
-    return new Response('failed', { status: 500 });
-  });
-  assert.equal(response.status, 502);
+test('AI cannot inject assets, scripts, colors or unbounded difficulty', () => {
+  const previous = template(); const safe = sanitizeDesign({ ...previous, game: { coinCount: 999999, enemyCount: -2, speed: 9999, duration: 1 }, palette: { background: 'url(javascript:evil)' }, assets: [{ url: 'javascript:evil' }], script: 'evil' }, previous, []);
+  assert.deepEqual(safe.game, { coinCount: 40, enemyCount: 0, speed: 400, duration: 15 }); assert.equal(safe.assets.length, 0); assert(!('script' in safe)); assert.equal(safe.palette.background, previous.palette.background);
 });
-test('status reads latest workflow run and replies with run URL', async () => {
-  const calls = [];
-  const response = await handleRequest(request([{ ...event, message: { type: 'text', text: 'status' } }]), env, async (url, options) => {
-    calls.push(url);
-    if (url === env.UPSTASH_REDIS_REST_URL) return Response.json({ result: 'OK' });
-    if (url.includes('/runs?')) return Response.json({ workflow_runs: [{ display_title: 'Build web', conclusion: 'success', html_url: 'https://github.com/banyapon/linegodotbuild/actions/runs/1' }] });
-    assert.match(JSON.parse(options.body).messages[0].text, /success/);
-    return Response.json({});
-  });
-  assert.equal(response.status, 200);
-  assert.equal(calls.some(url => url.endsWith('/dispatches')), false);
+test('asset URLs restrict protocol, host, cloud and extension', () => {
+  assert(validAssetUrl('https://res.cloudinary.com/test-cloud/image/upload/v1/a.png', env));
+  for (const url of ['https://127.0.0.1/a.png', 'http://res.cloudinary.com/test-cloud/image/upload/a.png', 'https://res.cloudinary.com/other/image/upload/a.jpg', 'https://res.cloudinary.com/test-cloud/image/upload/a.svg']) assert(!validAssetUrl(url, env));
 });
+test('delete accepts quoted ID but rejects path traversal', () => { assert.equal(command('x-delete "p_1234567890123456"').type, 'delete'); assert.equal(command('x-delete "../main"').type, 'help'); });
+test('Gemini uses header key and validates structured design', async () => {
+  const previous = template(); const result = await design({ design: previous, assets: [], history: [] }, 'อยากได้ดาว 9 ดวง', { GEMINI_API_KEY: 'synthetic-key' }, { call: async (service, url, options) => {
+    assert.equal(service, 'Gemini'); assert(!url.includes('synthetic-key')); assert.equal(options.headers['x-goog-api-key'], 'synthetic-key'); assert(JSON.parse(options.body).generationConfig.responseJsonSchema);
+    return Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify({ ...previous, game: { ...previous.game, coinCount: 9 }, reply: 'เพิ่มดาวแล้ว อยากเพิ่มอะไรอีก?' }) }] } }] });
+  } }); assert.equal(result.design.game.coinCount, 9);
+});
+test('demos do not require integrations', async () => { for (const genre of ['2d', '3d', 'vn']) { const r = await handleRequest(new Request(`https://test/api/games/demo/${genre}`), {}, () => assert.fail()); assert.equal(r.status, 200); assert.equal((await r.json()).genre, genre); } });

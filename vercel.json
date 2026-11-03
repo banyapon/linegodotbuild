@@ -4,6 +4,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "public",
   "regions": ["sin1"],
-  "functions": { "api/index.js": { "maxDuration": 60 } },
-  "rewrites": [{ "source": "/api/:path*", "destination": "/api" }]
+  "functions": { "api/index.js": { "maxDuration": 300 } },
+  "git": { "deploymentEnabled": { "game/**": false } },
+  "headers": [
+    { "source": "/play/:path*", "headers": [{ "key": "Cache-Control", "value": "no-store" }, { "key": "Referrer-Policy", "value": "no-referrer" }] },
+    { "source": "/api/:path*", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }
+  ],
+  "rewrites": [
+    { "source": "/play/:owner/:project", "destination": "/play.html" },
+    { "source": "/api/:path*", "destination": "/api" }
+  ]
 }

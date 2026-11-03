@@ -18,9 +18,9 @@ for (const [slug, file, title] of [['privacy', 'PRIVACY.md', 'นโยบาย
   await mkdir(`public/${slug}`, { recursive: true });
   await writeFile(`public/${slug}/index.html`, `<!doctype html>
 <html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${title} | LINE × Godot Build</title><meta name="description" content="${title}ของบริการ LINE × Godot Build">
+<title>${title} | LINE Game Studio</title><meta name="description" content="${title}ของบริการ LINE Game Studio">
 <link rel="stylesheet" href="/legal.css"></head><body>
-<header><a class="brand" href="/">LINE × Godot Build</a><nav aria-label="เมนูเอกสาร"><a href="/privacy"${slug === 'privacy' ? ' aria-current="page"' : ''}>ความเป็นส่วนตัว</a><a href="/terms"${slug === 'terms' ? ' aria-current="page"' : ''}>ข้อกำหนด</a></nav></header>
+<header><a class="brand" href="/">LINE Game Studio</a><nav aria-label="เมนูเอกสาร"><a href="/privacy"${slug === 'privacy' ? ' aria-current="page"' : ''}>ความเป็นส่วนตัว</a><a href="/terms"${slug === 'terms' ? ' aria-current="page"' : ''}>ข้อกำหนด</a></nav></header>
 <main>${content}</main><footer><a href="/">กลับหน้าแรก</a><a href="https://github.com/banyapon/linegodotbuild/blob/main/${file}">อ่านต้นฉบับ Markdown บน GitHub</a></footer>
 </body></html>\n`);
   console.log(`Generated /${slug} from ${file}`);

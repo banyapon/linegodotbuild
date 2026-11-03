@@ -1,8 +1,28 @@
 {
-  "name": "linegodot",
+  "name": "line-game-studio",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": "24.x" },
-  "scripts": { "build": "node scripts/build-pages.mjs", "test": "node --test", "dev": "node --env-file=.env.local scripts/dev.mjs" }
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "node scripts/playtest.mjs",
+    "test": "node --test test/*.test.js test/*.test.ts",
+    "dev": "node --env-file-if-exists=.env.local scripts/dev.mjs"
+  },
+  "dependencies": {
+    "@vercel/functions": "3.10.6",
+    "phaser": "3.90.0",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "24.10.0",
+    "@types/three": "0.187.0",
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3"
+  }
 }

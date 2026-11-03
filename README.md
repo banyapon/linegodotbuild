@@ -1,66 +1,94 @@
-# LINE × Godot build on Vercel
+# LINE Game Studio
 
-LINE → Vercel Functions (Node.js 24) → GitHub Actions → Godot export → LINE notification.
+Create and revise browser games from LINE. TypeScript + Phaser for 2D, Three.js for a 3D arcade arena, and a DOM visual novel player. Godot is no longer used.
 
-Repository: https://github.com/banyapon/linegodotbuild
+Live: https://linegodotbuild.vercel.app
 
-## Current scope
+## Try it
 
-Backend supports `build web`, `build windows`, `status`, `logs`. GitHub Actions exports a **Godot 4 stable / GDScript** game and uploads a ZIP artifact, then pushes the result and Actions URL to LINE. Web output is downloadable; publishing a playable game URL is a separate hosting step, not yet configured. C# and prerelease Godot versions require adapting the workflow.
+- [2D coin collector](https://linegodotbuild.vercel.app/play/demo/2d)
+- [3D arcade arena](https://linegodotbuild.vercel.app/play/demo/3d)
+- [Visual Novel](https://linegodotbuild.vercel.app/play/demo/vn)
 
-The repository starts without a game. Add your actual project under `game/` (or set `GODOT_PROJECT_PATH`). Commit `project.godot` and `export_presets.cfg` with presets named exactly `Web` and `Windows`. Do not commit `.godot/`, export credentials, or secrets.
+These demos do not need any external credentials. Use arrows/WASD or touch controls, collect every star, avoid moving enemies, and finish before the deadline. P pauses. Visual novels provide branching choices and save the current scene locally in the browser.
 
-## Vercel configuration
+## LINE commands
 
-Deploy repository with Framework Preset **Other**, root directory `.`, build command `npm run build`, output directory `public`, Node.js **24.x**. Static page is in `public/`; webhook is `/api/webhook`, health check is `/api/health`. Use the production HTTPS URL in LINE Developers. Ensure Deployment Protection allows LINE to reach that production webhook without login.
-
-## Policy pages
-
-- Privacy: https://linegodotbuild.vercel.app/privacy — source [PRIVACY.md](PRIVACY.md)
-- Terms: https://linegodotbuild.vercel.app/terms — source [TERMS.md](TERMS.md)
-
-Edit the Markdown sources and run `npm run build` to regenerate the static HTML pages. Vercel also regenerates them during deployment. Both pages work without JavaScript.
-
-In Vercel → Project → Settings → Environment Variables, configure for Production:
-
-| Variable | Value |
+| Message | Result |
 | --- | --- |
-| `LINE_CHANNEL_SECRET` | LINE Messaging API channel secret |
-| `LINE_CHANNEL_ACCESS_TOKEN` | LINE channel access token |
-| `LINE_ALLOWED_USER_IDS` | Comma-separated permitted LINE user IDs |
-| `GITHUB_TOKEN` | Fine-grained PAT restricted to `banyapon/linegodotbuild`, Actions read/write |
+| `new 2d` | New 2D project (default) |
+| `new vn` / `new 3d` | Visual Novel / Three.js project |
+| Send PNG/JPEG image | Copy actual LINE image bytes into signed Cloudinary upload |
+| `ภาพ ล่าสุด ฉาก` | Use latest image as background |
+| `ภาพ a2 ตัวละคร` | Assign asset a2 as player; also used as VN character fallback |
+| `asset a3 coin` / `asset a4 enemy` | Assign collectible / hazard |
+| A Cloudinary PNG/JPEG URL | Reference an existing asset in the configured cloud (not copied or deleted) |
+| Free text | Ask Gemini to revise game design and ask a follow-up question |
+| `พอแล้ว` / `publish` / `build` | Save branch snapshot and publish a playable URL |
+| `projects` / `status` | List own projects / inspect active project |
+| `open project_id` | Resume an existing own project |
+| `x-delete "project_id"` | Revoke URL, delete game branch and game-owned Cloudinary assets |
+
+The first image defaults to background; later images default to player. Assign roles explicitly to control usage. Up to 20 PNG/JPEG images, 8 MB each, and 30 projects per user. Commands are limited to 20/minute/user and accepted only from allowlisted direct LINE chats. A first ordinary message or image starts a 2D draft automatically.
+
+## Design and persistence
+
+Each project gets a random `p_...` ID, a hashed user namespace, branch `game/<namespace>/<project_id>`, and URL `/play/<namespace>/<project_id>`. These namespaces are identifiers, not authentication. Only the signed, allowlisted LINE owner can edit or delete their projects. Public game links are shareable.
+
+Drafts, published snapshots and per-user active projects are stored in Redis. Each successful design/image change also commits `studio/project.json` on the project branch, including the latest 40 conversation entries and asset references. Raw LINE User IDs and reply tokens are not committed. Redis must remain available and persistent; branches do not automatically restore a lost Redis registry. Configure backups in the Redis provider.
+
+Editing a published game leaves its last published snapshot playable until `พอแล้ว` publishes again. Generic, prebuilt TypeScript players render the JSON design, so each game does not need a separate Vercel deployment. `game/**` branches do not trigger automatic Vercel builds.
+
+Gemini receives the current design, recent conversation and up to three most recent image previews from Cloudinary. Its structured JSON is validated; it cannot execute code or invent asset URLs. Supported changes are title/story, palette, difficulty counts/speed/time, asset roles, and VN scene choices. It does **not** implement arbitrary new mechanics, generate images, or generate runnable TypeScript. Without `GEMINI_API_KEY`, the bot clearly labels template mode and supports `ชื่อ ...`, `เหรียญ 12`, `ศัตรู 4`, `เวลา 90` plus genre changes (`2d`, `3d`, `vn`).
+
+## Environment variables
+
+Set secrets directly in Vercel → Project → Settings → Environment Variables → Production, then redeploy. Never paste secrets into chat or source control.
+
+| Name | Purpose |
+| --- | --- |
+| `LINE_CHANNEL_SECRET` | Verify webhook signature |
+| `LINE_CHANNEL_ACCESS_TOKEN` | Get image content; reply and push results |
+| `LINE_ALLOWED_USER_IDS` | Comma-separated allowed LINE User IDs |
+| `GITHUB_TOKEN` | Fine-grained PAT for this repository with **Contents: Read and write** (the old Actions-only token is insufficient) |
 | `GITHUB_OWNER` | `banyapon` |
 | `GITHUB_REPO` | `linegodotbuild` |
-| `GITHUB_REF` | `main` (trusted branch only) |
-| `GITHUB_WORKFLOW` | `godot-build.yml` |
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis HTTPS REST URL |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST write token |
+| `GITHUB_REF` | Trusted base branch, defaults to `main` |
+| `UPSTASH_REDIS_REST_URL` | Redis HTTPS REST endpoint |
+| `UPSTASH_REDIS_REST_TOKEN` | Read/write REST token |
+| `CLOUDINARY_CLOUD_NAME` | Cloud name; legacy spelling `CLOUDINARY_CLOUNDNAME` is also accepted |
+| `CLOUDINARY_API_KEY` | Server-side Cloudinary key |
+| `CLOUDINARY_API_SECRET` | Server-side signature secret |
+| `GEMINI_API_KEY` | Gemini API key; optional template mode without it |
+| `GEMINI_MODEL` | Configurable structured-output model; defaults to `gemini-3.5-flash-lite` |
+| `PUBLIC_BASE_URL` | Defaults to `https://linegodotbuild.vercel.app` |
 
-Create/connect an Upstash Redis database using Vercel Marketplace or Upstash console. This is required for durable duplicate suppression. Store credentials directly in settings; never paste tokens into chat or commit them. Redeploy after configuring variables. `/api/health` reports `configured: true` when required variable names are present; it does not test credential validity.
+`GET /api/health` reports missing **names only**, with separate image/Gemini readiness. Presence checks do not validate credentials. `GITHUB_WORKFLOW` is obsolete. GitHub Actions now validates web code; no Godot workflow or notification secrets in Actions are needed.
 
-## GitHub configuration
+Vercel: Other framework, Node 24, `npm run build`, output `public`, region Singapore. Production must allow unauthenticated LINE requests; webhook authentication uses LINE's HMAC. LINE webhook: `https://linegodotbuild.vercel.app/api/webhook`. Enable webhook and Verify in LINE Developers.
 
-Settings → Secrets and variables → Actions:
+## Deletion, privacy and operational limits
 
-- Variables: `GODOT_VERSION` = exact version used by your game, e.g. `4.5.1` (example only, choose your actual version). Optional `GODOT_PROJECT_PATH` defaults to `game`.
-- Secrets: `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_ALLOWED_USER_IDS` (same values as backend).
-- Keep `main` trusted: workflows execute the game project. Upload `.github/workflows/godot-build.yml` to the default branch before dispatching.
+Deletion checks ownership and immediately revokes the game JSON route before external cleanup. If cleanup fails, send the same `x-delete` command again. Only images uploaded by this project are destroyed; URL-only references are not destroyed. Cloudinary CDN invalidation is not instantaneous. Git history, forks, browser-loaded pages and downloaded copies may retain data; branch deletion is not a secure history purge.
 
-The build job has no LINE token. A separate notification job sends only to allowlisted recipients. Artifact downloads require GitHub login and expire after 14 days.
+This repository is public: project branch content, conversation snapshots and asset URLs can be visible on GitHub. Do not send confidential information; use a private repository before accepting private user content. Public game data exposes only the published design, not conversations, tokens, Cloudinary public IDs, or raw LINE IDs.
 
-## LINE configuration
+Webhook events are deduplicated for seven days and serialized per user with an expiring lock. Vercel `waitUntil` returns webhook acknowledgment early and continues processing; it is **not a durable job queue**. If a function terminates, a response may not arrive; inspect `status` and resend the instruction as a new message. Reply/push APIs consume LINE quota. External failures do not guarantee exactly-once operations. Monitor Vercel runtime logs and provider billing/quotas.
 
-LINE Developers → Messaging API → Webhook URL: `https://YOUR-PRODUCTION-DOMAIN/api/webhook`. Click Verify, enable Use webhook, and disable the OA's automatic reply if it conflicts with bot replies. Commands are accepted only in direct user chats from the allowlist.
-
-## Local verification
+## Development and verification
 
 ```powershell
+npm ci
 npm test
+npm run typecheck
+npm run build
 Copy-Item .env.example .env.local
-# Fill .env.local privately
 npm run dev
 ```
 
-Raw bytes are verified with HMAC-SHA256 before parsing JSON. Redis claims each event ID for seven days. Claims remain when GitHub times out or LINE reply fails: check Actions before issuing a new command, because dispatch outcomes can be ambiguous. This prioritizes avoiding duplicate builds and is not an exactly-once delivery guarantee. Notification failures appear in the `notify` job.
+```powershell
+npx playwright install chromium
+npm run test:e2e
+```
 
-Docs: [Vercel Node.js Functions](https://vercel.com/docs/functions/runtimes/node-js), [LINE webhooks](https://developers.line.biz/en/docs/messaging-api/receiving-messages/), [GitHub workflow API](https://docs.github.com/en/rest/actions/workflows), [Godot exports](https://docs.godotengine.org/en/stable/tutorials/export/exporting_projects.html).
+Browser tests launch a local server, exercise the 2D objective/pause/restart, VN choices, 3D boot, mobile touch controls, and capture screenshots in ignored `artifacts/`. `BASE_URL` can target a deployed site. Policy sources [PRIVACY.md](PRIVACY.md) and [TERMS.md](TERMS.md) generate static `/privacy` and `/terms` during build.

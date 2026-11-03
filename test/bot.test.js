@@ -73,3 +73,7 @@ test('LINE token whitespace is trimmed before authorization', async () => {
   const lineCall = f.calls.find(x => x.url.startsWith('https://api.line.me/'));
   assert.equal(lineCall.options.headers.Authorization, 'Bearer test-token');
 });
+test('server diagnostics cannot run without authentication', async () => {
+  const response = await handleRequest(new Request('https://test/api/diagnostics', { method: 'POST' }), env, () => assert.fail('Provider called without authentication'));
+  assert.equal(response.status, 401);
+});

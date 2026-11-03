@@ -30,8 +30,8 @@ test('LINE card offers scoped actions, play URI and preserves text fallback', ()
   assert.equal(card.type,'flex'); assert(card.altText.includes('My Game'));
   const actions=card.contents.footer.contents.map(x=>x.action);
   assert(actions.some(a=>a.type==='uri'&&a.uri.includes('/play/')));
-  assert(actions.some(a=>a.text===`publish ${id}`)); assert.equal(command(`publish ${id}`).type,'publish');
-  assert(actions.some(a=>a.text===`x-delete "${id}"`));
+  assert(actions.some(a=>a.text===`@gamecreator publish ${id}`)); assert.equal(command(`publish ${id}`).type,'publish');
+  assert(actions.some(a=>a.text===`@gamecreator x-delete "${id}"`));
 });
 test('new space → branch files → publish → serve source → delete revokes both files', async () => {
   const f=fixture(), send=e=>handleRequest(request([e]),env,f.fetcher);

@@ -15,6 +15,7 @@ test('create → edit → upload → publish → public URL → owner deletion',
   await send(event()); let p = f.projects()[0]; assert.equal(p.design.genre, '2d'); assert.match(p.branch, /^game\/[a-f0-9]{20}\/p_/);
   assert.equal(f.files.get(p.branch).id, p.id); assert(!JSON.stringify(f.files.get(p.branch)).includes('Ualice'));
   await send(event('เหรียญ 12')); assert.equal(f.projects()[0].design.game.coinCount, 12);
+  await send(event('upload'));
   await send({ ...event(), message: { type: 'image', id: 'image-1' } }); p = f.projects()[0]; assert.equal(p.assets.length, 1); assert.equal(p.assets[0].owned, true);
   const upload = f.calls.find(c => c.url.endsWith('/image/upload')); assert(upload.options.body instanceof FormData); assert(upload.options.body.get('signature'));
   await send(event('ภาพ ล่าสุด ตัวละคร')); assert.equal(f.projects()[0].assets[0].role, 'player');
@@ -28,7 +29,7 @@ test('create → edit → upload → publish → public URL → owner deletion',
 });
 test('duplicate delivery creates only one branch', async () => { const f = fixture(), e = event(); await handleRequest(request([e]), env, f.fetcher); await handleRequest(request([e]), env, f.fetcher); assert.equal(f.projects().length, 1); assert.equal(f.branches.size, 1); });
 test('delete revokes URL before failed cleanup and supports retry', async () => {
-  const f = fixture(), send = e => handleRequest(request([e]), env, f.fetcher); await send(event()); await send({ ...event(), message: { type: 'image', id: 'image-2' } }); await send(event('พอแล้ว'));
+  const f = fixture(), send = e => handleRequest(request([e]), env, f.fetcher); await send(event()); await send(event('upload')); await send({ ...event(), message: { type: 'image', id: 'image-2' } }); await send(event('พอแล้ว'));
   const p = f.projects()[0]; f.fail('api.cloudinary.com'); await send(event(`x-delete "${p.id}"`)); assert.equal(f.projects()[0].status, 'deleting'); assert.equal(f.projects()[0].published, null);
   f.fail(''); await send(event(`x-delete "${p.id}"`)); assert.equal(f.projects()[0].status, 'deleted');
 });

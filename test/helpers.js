@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 export const env = { LINE_CHANNEL_SECRET: 'test-secret', LINE_CHANNEL_ACCESS_TOKEN: 'test-token', LINE_ALLOWED_USER_IDS: 'Ualice,Ubob', GITHUB_TOKEN: 'test-gh', GITHUB_OWNER: 'banyapon', GITHUB_REPO: 'linegodotbuild', UPSTASH_REDIS_REST_URL: 'https://redis.test', UPSTASH_REDIS_REST_TOKEN: 'test-redis', CLOUDINARY_CLOUNDNAME: 'test-cloud', CLOUDINARY_API_KEY: 'test-key', CLOUDINARY_API_SECRET: 'test-secret' };
 let count = 0;
-export function event(text = 'new collector', user = 'Ualice') { return { type: 'message', webhookEventId: `event-${++count}`, replyToken: `reply-${count}`, source: { type: 'user', userId: user }, message: { type: 'text', text } }; }
+export function event(text = 'new collector', user = 'Ualice') { return { type: 'message', webhookEventId: `event-${++count}`, replyToken: `reply-${count}`, source: { type: 'user', userId: user }, message: { type: 'text', text: `@gamecreator ${text}` } }; }
 export function request(events, signature) {
   const raw = JSON.stringify({ events });
   return new Request('https://example.test/api/webhook', { method: 'POST', body: raw, headers: { 'x-line-signature': signature ?? createHmac('sha256', env.LINE_CHANNEL_SECRET).update(raw).digest('base64') } });

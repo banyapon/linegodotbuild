@@ -3,13 +3,13 @@
   "id": "p_f7a8c8d00c7edb50",
   "owner": "34f0c2b56cac549f6f91",
   "status": "draft",
-  "updatedAt": "2026-11-03T07:40:38.099Z",
+  "updatedAt": "2026-11-03T07:41:03.914Z",
   "design": {
     "version": 1,
     "genre": "2d",
     "mode": "custom",
     "title": "Starward Patrol",
-    "description": "เกมหน้าเดียว 9:16 · ลากจอยหลบและยิงยานศัตรู",
+    "description": "เพิ่มระบบบอสและไอเทมเสริมพลังในการเดินทางท่องอวกาศ",
     "palette": {
       "background": "#122c29",
       "player": "#83f5b2",
@@ -68,6 +68,15 @@
     "index.html",
     "index.js"
   ],
-  "conversation": [],
+  "conversation": [
+    {
+      "role": "user",
+      "text": "ยานอวกาศ virtual joystck"
+    },
+    {
+      "role": "assistant",
+      "text": "เพิ่มระบบบอสและไอเทมเสริมพลังในเกมแล้วครับ อยากให้ปรับแต่งความยากหรือเพิ่มอาวุธประเภทไหนอีกไหมครับ?"
+    }
+  ],
   "assets": []
 }

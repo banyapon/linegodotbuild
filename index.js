@@ -1,6 +1,8 @@
 (function(){'use strict';
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),W=540,H=960;
 let player,enemy,score,hp,turn,ended,inStory=true,slashAnim=0;
+const bgImg=new Image();bgImg.src='https://res.cloudinary.com/dkyzhwy4w/image/upload/v1793692090/line-studio/34f0c2b56cac549f6f91/p_f7a8c8d00c7edb50/1c22d5910932eaf470c1.jpg';
+
 const scenes={
   start:{speaker:'ผู้บรรยาย',text:'คุณพบดาบพลังงานลึกลับปักอยู่ จะดึงมันขึ้นมาหรือไม่?',choices:[{label:'ดึงดาบและออกเดินทาง',next:'letter'},{label:'เดินเลี่ยงไป',next:'end'}]},
   letter:{speaker:'เสียงลึกลับ',text:'วิญญาณแห่งดาบยอมรับคุณ จงใช้มันฟาดฟันศัตรูในกาแล็กซีให้สิ้นซาก',choices:[{label:'เริ่มต่อสู้เทิร์นเบส',next:'game'}]},
@@ -49,7 +51,6 @@ window.addEventListener('pointerup',e=>{
   const dx=e.clientX-touchStartX;
   const dy=e.clientY-touchStartY;
   if(Math.hypot(dx,dy)>30||(window.StudioInput&&window.StudioInput.fire)){
-    // Player Slash Action
     slashAnim=1;
     const dmg=player.atk+Math.floor(Math.random()*5);
     enemy.hp-=dmg;
@@ -98,7 +99,6 @@ function frame(now){
   ctx.save();ctx.translate(W/2,280);
   ctx.fillStyle='#fa7f91';ctx.beginPath();ctx.arc(0,0,70,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#3a1018';ctx.fillRect(-35,-10,70,20);
-  // Enemy HP bar
   ctx.fillStyle='#333';ctx.fillRect(-60,-95,120,10);
   ctx.fillStyle='#fa7f91';ctx.fillRect(-60,-95,120*(Math.max(0,enemy.hp)/enemy.maxHp),10);
   ctx.fillStyle='#fff';ctx.font='14px sans-serif';ctx.textAlign='center';
@@ -111,15 +111,18 @@ function frame(now){
     ctx.beginPath();ctx.arc(W/2,280,100,-Math.PI/2,Math.PI/2);ctx.stroke();
   }
 
-  // Draw Player Status / UI
+  // Draw Player Status / Character Asset
   ctx.save();ctx.translate(W/2,750);
-  ctx.fillStyle='#83f5b2';ctx.beginPath();ctx.arc(0,-40,40,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#122c29';ctx.font='20px sans-serif';ctx.textAlign='center';ctx.fillText('⚔️',0,-32);
-  // Player HP bar
-  ctx.fillStyle='#333';ctx.fillRect(-80,20,160,14);
-  ctx.fillStyle='#83f5b2';ctx.fillRect(-80,20,160*(Math.max(0,hp)/player.maxHp),14);
-  ctx.fillStyle='#fff';ctx.font='14px sans-serif';
-  ctx.fillText('พลังชีวิตผู้กล้า: '+Math.max(0,hp)+'/'+player.maxHp,0,10);
+  if(bgImg.complete&&bgImg.naturalWidth!==0){
+    ctx.drawImage(bgImg,-70,-110,140,160);
+  }else{
+    ctx.fillStyle='#83f5b2';ctx.beginPath();ctx.arc(0,-40,40,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#122c29';ctx.font='20px sans-serif';ctx.textAlign='center';ctx.fillText('⚔️',0,-32);
+  }
+  ctx.fillStyle='#333';ctx.fillRect(-80,55,160,14);
+  ctx.fillStyle='#83f5b2';ctx.fillRect(-80,55,160*(Math.max(0,hp)/player.maxHp),14);
+  ctx.fillStyle='#fff';ctx.font='14px sans-serif';ctx.textAlign='center';
+  ctx.fillText('พลังชีวิตผู้กล้า: '+Math.max(0,hp)+'/'+player.maxHp,0,45);
   ctx.restore();
 
   document.getElementById('readout').textContent='✦ '+score+'    เทิร์น: '+(turn==='player'?'ตาคุณ (ปัดหน้าจอเพื่อฟัน!)':'ศัตรูกำลังโจมตี');

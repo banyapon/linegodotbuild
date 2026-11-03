@@ -12,7 +12,14 @@ The repository starts without a game. Add your actual project under `game/` (or 
 
 ## Vercel configuration
 
-Deploy repository with Framework Preset **Other**, root directory `.`, no build command, Node.js **24.x**. Static page is in `public/`; webhook is `/api/webhook`, health check is `/api/health`. Use the production HTTPS URL in LINE Developers. Ensure Deployment Protection allows LINE to reach that production webhook without login.
+Deploy repository with Framework Preset **Other**, root directory `.`, build command `npm run build`, output directory `public`, Node.js **24.x**. Static page is in `public/`; webhook is `/api/webhook`, health check is `/api/health`. Use the production HTTPS URL in LINE Developers. Ensure Deployment Protection allows LINE to reach that production webhook without login.
+
+## Policy pages
+
+- Privacy: https://linegodotbuild.vercel.app/privacy — source [PRIVACY.md](PRIVACY.md)
+- Terms: https://linegodotbuild.vercel.app/terms — source [TERMS.md](TERMS.md)
+
+Edit the Markdown sources and run `npm run build` to regenerate the static HTML pages. Vercel also regenerates them during deployment. Both pages work without JavaScript.
 
 In Vercel → Project → Settings → Environment Variables, configure for Production:
 

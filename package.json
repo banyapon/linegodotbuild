@@ -4,5 +4,5 @@
   "private": true,
   "type": "module",
   "engines": { "node": "24.x" },
-  "scripts": { "test": "node --test", "dev": "node --env-file=.env.local scripts/dev.mjs" }
+  "scripts": { "build": "node scripts/build-pages.mjs", "test": "node --test", "dev": "node --env-file=.env.local scripts/dev.mjs" }
 }

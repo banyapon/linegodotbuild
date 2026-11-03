@@ -9,6 +9,7 @@ Live: https://linegodotbuild.vercel.app
 - [2D coin collector](https://linegodotbuild.vercel.app/play/demo/2d)
 - [3D arcade arena](https://linegodotbuild.vercel.app/play/demo/3d)
 - [Visual Novel](https://linegodotbuild.vercel.app/play/demo/vn)
+- [Monster Tic Tac Toe](https://linegodotbuild.vercel.app/play/demo/ttt)
 
 These demos do not need any external credentials. Use arrows/WASD or touch controls, collect every star, avoid moving enemies, and finish before the deadline. P pauses. Visual novels provide branching choices and save the current scene locally in the browser.
 
@@ -18,6 +19,8 @@ These demos do not need any external credentials. Use arrows/WASD or touch contr
 | --- | --- |
 | `new 2d` | New 2D project (default) |
 | `new vn` / `new 3d` | Visual Novel / Three.js project |
+| `new ttt` / `new xo` | Monster Tic Tac Toe against a computer opponent |
+| `build web สร้างเกม Tic Tac Toe แบบ monster` | Design and publish the requested template in one message |
 | Send PNG/JPEG image | Copy actual LINE image bytes into signed Cloudinary upload |
 | `ภาพ ล่าสุด ฉาก` | Use latest image as background |
 | `ภาพ a2 ตัวละคร` | Assign asset a2 as player; also used as VN character fallback |
@@ -30,6 +33,8 @@ These demos do not need any external credentials. Use arrows/WASD or touch contr
 | `x-delete "project_id"` | Revoke URL, delete game branch and game-owned Cloudinary assets |
 
 The first image defaults to background; later images default to player. Assign roles explicitly to control usage. Up to 20 PNG/JPEG images, 8 MB each, and 30 projects per user. Commands are limited to 20/minute/user and accepted only from allowlisted direct LINE chats. A first ordinary message or image starts a 2D draft automatically.
+
+Tic Tac Toe is a supported 2D mode (`mode: tictactoe`) with legal move validation, computer win/block decisions, win/draw detection and restart. `player` and `enemy` images replace the default friendly/rival monster faces. A full `build web <brief>` command designs and publishes directly; ordinary creative messages keep the follow-up conversation. Known Tic Tac Toe requests can still publish a clearly labeled template when Gemini is unavailable.
 
 ## Design and persistence
 

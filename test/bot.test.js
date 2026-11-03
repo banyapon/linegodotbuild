@@ -54,3 +54,22 @@ test('Gemini uses header key and validates structured design', async () => {
   } }); assert.equal(result.design.game.coinCount, 9);
 });
 test('demos do not require integrations', async () => { for (const genre of ['2d', '3d', 'vn']) { const r = await handleRequest(new Request(`https://test/api/games/demo/${genre}`), {}, () => assert.fail()); assert.equal(r.status, 200); assert.equal((await r.json()).genre, genre); } });
+test('screenshot build web command publishes playable Tic Tac Toe with full brief', async () => {
+  const f = fixture();
+  const message = 'build web สร้างเกม Tic Tac Toe\nแบบ monster';
+  assert.equal(command(message).type, 'generate');
+  await handleRequest(request([event(message)]), env, f.fetcher);
+  const project = f.projects()[0];
+  assert.equal(project.published.mode, 'tictactoe'); assert.equal(project.published.genre, '2d');
+  assert(project.history.some(x => x.text.includes('Tic Tac Toe'))); assert.match(f.lastMessage(), /เกมพร้อมเล่นแล้ว/);
+});
+test('known Tic Tac Toe can publish a labeled template if Gemini fails', async () => {
+  const f = fixture(); f.fail('generativelanguage.googleapis.com');
+  await handleRequest(request([event('build web สร้างเกม Tic Tac Toe แบบ monster')]), { ...env, GEMINI_API_KEY: 'synthetic-key' }, f.fetcher);
+  assert.equal(f.projects()[0].published.mode, 'tictactoe'); assert.match(f.lastMessage(), /Gemini ยังปรับรายละเอียดไม่สำเร็จ/);
+});
+test('LINE token whitespace is trimmed before authorization', async () => {
+  const f = fixture(); await handleRequest(request([event('status')]), { ...env, LINE_CHANNEL_ACCESS_TOKEN: ' test-token\n' }, f.fetcher);
+  const lineCall = f.calls.find(x => x.url.startsWith('https://api.line.me/'));
+  assert.equal(lineCall.options.headers.Authorization, 'Bearer test-token');
+});

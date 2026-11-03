@@ -46,6 +46,15 @@ try {
   assert.notEqual(await page.locator('.novel-dialogue p').textContent(), before);
   await page.screenshot({ path: 'artifacts/vn-desktop.png', fullPage: true });
   console.log('PASS Visual Novel choice changes scene');
+  await page.goto(`${base}/play/demo/ttt`); await page.locator('#start').click();
+  await page.waitForSelector('#world[data-ready="true"] .ttt-grid');
+  assert.equal(await page.locator('.ttt-cell').count(), 9);
+  await page.locator('.ttt-cell').first().click();
+  await page.waitForFunction(() => document.querySelector('.ttt-arena').dataset.turn === 'X');
+  assert.equal(await page.locator('.ttt-monster').count(), 2);
+  await page.screenshot({ path: 'artifacts/ttt-desktop.png', fullPage: true });
+  await page.locator('.ttt-reset').click(); assert.equal(await page.locator('.ttt-monster').count(), 0);
+  console.log('PASS Monster Tic Tac Toe move, computer turn, reset');
   await page.goto(`${base}/play/demo/3d`); await page.locator('#start').click(); await page.waitForSelector('#world[data-ready="true"] canvas');
   await page.waitForTimeout(600); await page.keyboard.down('ArrowLeft'); await page.waitForTimeout(300); await page.keyboard.up('ArrowLeft');
   await page.screenshot({ path: 'artifacts/3d-desktop.png', fullPage: true });
@@ -65,6 +74,11 @@ try {
   assert(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await mobile.screenshot({ path: 'artifacts/2d-mobile.png', fullPage: true });
   console.log('PASS mobile layout and touch controls');
+  await mobile.goto(`${base}/play/demo/ttt`); await mobile.locator('#start').tap();
+  await mobile.locator('.ttt-cell').first().tap(); await mobile.waitForFunction(() => document.querySelector('.ttt-arena').dataset.turn === 'X');
+  assert.equal(await mobile.locator('.ttt-monster').count(), 2);
+  await mobile.screenshot({ path: 'artifacts/ttt-mobile.png', fullPage: true });
+  console.log('PASS mobile Tic Tac Toe touch input');
   assert.deepEqual(errors, [], 'Browser JS errors');
   console.log('Browser playtest passed; screenshots in artifacts/');
 } finally { await browser?.close(); server?.kill(); }

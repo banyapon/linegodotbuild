@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "id": "p_effc2b48ac16ccc0",
+  "owner": "34f0c2b56cac549f6f91",
+  "status": "published",
+  "updatedAt": "2026-11-03T07:13:08.730Z",
+  "design": {
+    "version": 1,
+    "genre": "2d",
+    "mode": "tictactoe",
+    "title": "Monster Tic Tac Toe",
+    "description": "ท้าดวลมอนสเตอร์ วางเครื่องหมายให้ครบ 3 ตัวในแนวเดียวกัน ระบบจำกัดเฉพาะแนวทาง 2D, 3D (เก็บเหรียญ/หลบภัย) และ VN (Visual Novel) เท่านั้น ไม่สามารถสร้างเกมยานอวกาศ Virtual Joystick ได้เนื่องจากเกินข้อจำกัดของเทมเพลตครับ",
+    "palette": {
+      "background": "#122c29",
+      "player": "#83f5b2",
+      "coin": "#ffd277",
+      "enemy": "#fa7f91"
+    },
+    "game": {
+      "coinCount": 8,
+      "enemyCount": 3,
+      "speed": 210,
+      "duration": 75
+    },
+    "scenes": [
+      {
+        "id": "start",
+        "speaker": "ผู้บรรยาย",
+        "text": "คุณพบจดหมายหนึ่งฉบับใต้แสงดาว จะเปิดอ่านหรือไม่?",
+        "background": "",
+        "character": "",
+        "choices": [
+          {
+            "label": "เปิดจดหมาย",
+            "next": "letter"
+          },
+          {
+            "label": "เดินทางต่อ",
+            "next": "end"
+          }
+        ]
+      },
+      {
+        "id": "letter",
+        "speaker": "เสียงจากจดหมาย",
+        "text": "ทุกการเดินทางเริ่มต้นจากตัวเลือกเล็ก ๆ ขอบคุณที่เปิดใจรับเรื่องราวของเรา",
+        "background": "",
+        "character": "",
+        "choices": [
+          {
+            "label": "ออกเดินทาง",
+            "next": "end"
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "speaker": "ผู้บรรยาย",
+        "text": "และการผจญภัยบทใหม่ก็กำลังจะเริ่มต้น…",
+        "background": "",
+        "character": "",
+        "choices": []
+      }
+    ],
+    "assets": []
+  },
+  "conversation": [
+    {
+      "role": "user",
+      "text": "สร้างเกม mobile 9:16 เล่นแบบ Virtual \nJoystick เกมยานอวกาศ"
+    },
+    {
+      "role": "assistant",
+      "text": "ระบบไม่รองรับเกมยานอวกาศหรือ Virtual Joystick ครับ ตอนนี้ยังคงรูปแบบ Tic Tac Toe กับมอนสเตอร์ไว้ คุณต้องการปรับเปลี่ยนสีสันหรือข้อความในเนื้อเรื่อง VN ต่อไหมครับ?"
+    }
+  ],
+  "assets": []
+}

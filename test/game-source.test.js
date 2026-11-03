@@ -26,7 +26,7 @@ test('standalone source contains joystick bridge and separate index.js, sandbox 
 });
 test('LINE card offers scoped actions, play URI and preserves text fallback', () => {
   const id='p_1234567890123456', owner=ownerId('Ualice');
-  const [card] = lineCard(`เกมพร้อมเล่นแล้ว\nMy Game\nhttps://linegodotbuild.vercel.app/play/${owner}/${id}\n${id}`, env);
+  const [card] = lineCard(`เกมพร้อมเล่นแล้ว\nMy Game\nhttps://linegodotbuild.vercel.app/play/${owner}/${id}\n${id}`, env, 'result', true);
   assert.equal(card.type,'flex'); assert(card.altText.includes('My Game'));
   const actions=card.contents.footer.contents.map(x=>x.action);
   assert(actions.some(a=>a.type==='uri'&&a.uri.includes('/play/')));

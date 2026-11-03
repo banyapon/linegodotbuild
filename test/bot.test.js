@@ -7,7 +7,7 @@ import { validAssetUrl } from '../lib/services.js';
 import { env, event, request, fixture } from './helpers.js';
 test('forged signature rejected before upstream access', async () => { assert.equal((await handleRequest(request([event()], 'forged'), env, () => assert.fail())).status, 401); });
 test('LINE Verify works with only channel secret', async () => { assert.equal((await handleRequest(request([]), { LINE_CHANNEL_SECRET: env.LINE_CHANNEL_SECRET })).status, 200); });
-test('unauthorized users and group chats cannot create projects', async () => {
+test('unauthorized users and malformed group sources cannot create projects', async () => {
   for (const source of [{ type: 'user', userId: 'Uother' }, { type: 'group', userId: 'Ualice' }]) assert.equal((await handleRequest(request([{ ...event(), source }]), env, () => assert.fail())).status, 200);
 });
 test('create → edit → upload → publish → public URL → owner deletion', async () => {

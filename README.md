@@ -25,11 +25,11 @@ These demos do not need any external credentials. Use arrows/WASD or touch contr
 
 ## LINE commands
 
-Every text command and creative reply must include `@gamecreator`, for example `@gamecreator status` or `@gamecreator build web สร้างเกมยานอวกาศ`. Untagged text is silently ignored before Redis, AI or LINE reply calls. Native LINE self mentions are also accepted. Card message actions include the tag automatically. Direct-chat allowlisting remains required.
+Direct chats accept commands, creative replies and images without a mention (an optional `@gamecreator` still works). In group chats, text commands must include `@gamecreator`, for example `@gamecreator status`. Untagged group text is silently ignored before Redis, AI or LINE reply calls. Native LINE self mentions are also accepted. Group Card actions include the tag automatically; direct Card actions omit it. Results and errors return to the originating chat. The sender must be an allowlisted LINE User ID in both contexts; project ownership remains per user.
 
-For images, first send `@gamecreator upload`, then send **one** PNG/JPEG within two minutes. The permission expires and is consumed by that image. Other images are ignored. Repeat the upload command for each image. Alternatively send `@gamecreator <Cloudinary image URL>`.
+Direct-chat images are accepted immediately. In groups, first send `@gamecreator upload`, then send **one** PNG/JPEG within two minutes in the same group. Permission is scoped to that sender and group, expires, and is consumed by that image. Other group images are ignored. Repeat the upload command for each image. Alternatively send `@gamecreator <Cloudinary image URL>` in the group. Enable the bot's group participation in LINE Developers before inviting it.
 
-The command names below omit the required tag for readability.
+The command names below omit the group-only tag for readability.
 
 | Message | Result |
 | --- | --- |
@@ -48,7 +48,7 @@ The command names below omit the required tag for readability.
 | `open project_id` | Resume an existing own project |
 | `x-delete "project_id"` | Revoke URL, delete game branch and game-owned Cloudinary assets |
 
-The first explicitly requested image defaults to background; later images default to player. Assign roles explicitly to control usage. Up to 20 PNG/JPEG images, 8 MB each, and 30 projects per user. Commands are limited to 20/minute/user and accepted only from allowlisted direct LINE chats. A first tagged creative message or explicitly requested image starts a draft automatically.
+The first accepted image defaults to background; later images default to player. Assign roles explicitly to control usage. Up to 20 PNG/JPEG images, 8 MB each, and 30 projects per user. Commands are limited to 20/minute/user and accepted only from allowlisted senders. A first accepted creative message or image starts a draft automatically. Commands in a group can expose the sender's project list and results to that group; use a direct chat for private conversations.
 
 Tic Tac Toe is a supported 2D mode (`mode: tictactoe`) with legal move validation, computer win/block decisions, win/draw detection and restart. `player` and `enemy` images replace the default friendly/rival monster faces. A full `build web <brief>` command designs and publishes directly; ordinary creative messages keep the follow-up conversation. Known Tic Tac Toe requests can still publish a clearly labeled template when Gemini is unavailable.
 

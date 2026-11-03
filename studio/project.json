@@ -1,0 +1,73 @@
+{
+  "version": 2,
+  "id": "p_f7a8c8d00c7edb50",
+  "owner": "34f0c2b56cac549f6f91",
+  "status": "draft",
+  "updatedAt": "2026-11-03T07:40:38.099Z",
+  "design": {
+    "version": 1,
+    "genre": "2d",
+    "mode": "custom",
+    "title": "Starward Patrol",
+    "description": "เกมหน้าเดียว 9:16 · ลากจอยหลบและยิงยานศัตรู",
+    "palette": {
+      "background": "#122c29",
+      "player": "#83f5b2",
+      "coin": "#ffd277",
+      "enemy": "#fa7f91"
+    },
+    "game": {
+      "coinCount": 8,
+      "enemyCount": 3,
+      "speed": 210,
+      "duration": 75
+    },
+    "scenes": [
+      {
+        "id": "start",
+        "speaker": "ผู้บรรยาย",
+        "text": "คุณพบจดหมายหนึ่งฉบับใต้แสงดาว จะเปิดอ่านหรือไม่?",
+        "background": "",
+        "character": "",
+        "choices": [
+          {
+            "label": "เปิดจดหมาย",
+            "next": "letter"
+          },
+          {
+            "label": "เดินทางต่อ",
+            "next": "end"
+          }
+        ]
+      },
+      {
+        "id": "letter",
+        "speaker": "เสียงจากจดหมาย",
+        "text": "ทุกการเดินทางเริ่มต้นจากตัวเลือกเล็ก ๆ ขอบคุณที่เปิดใจรับเรื่องราวของเรา",
+        "background": "",
+        "character": "",
+        "choices": [
+          {
+            "label": "ออกเดินทาง",
+            "next": "end"
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "speaker": "ผู้บรรยาย",
+        "text": "และการผจญภัยบทใหม่ก็กำลังจะเริ่มต้น…",
+        "background": "",
+        "character": "",
+        "choices": []
+      }
+    ],
+    "assets": []
+  },
+  "files": [
+    "index.html",
+    "index.js"
+  ],
+  "conversation": [],
+  "assets": []
+}
